@@ -1,0 +1,11 @@
+{
+  "id": "seek",
+  "name": "Seek",
+  "repo": "its-ash/seek",
+  "package": "com.itsash.seek",
+  "tagline": "Find lost earbuds, watches and Bluetooth tags with a hot and cold meter.",
+  "description": "Seek finds the Bluetooth things you lost. Pick your earbuds, watch, fitness band, speaker or BLE tag from the list of paired and nearby devices, then walk around: a big hot and cold meter, a rough distance, a closer or farther arrow, and a beep or vibration that speeds up as you get near guide you to it. For connected earbuds, a Play sound button plays a loud tone through them. No account, no location tracking. The only network use is the update check in Settings.",
+  "category": "Utilities",
+  "icon": "assets/icon/logo-1024.png",
+  "homepage": "https://seek.itsash.in/"
+}
