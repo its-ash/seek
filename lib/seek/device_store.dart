@@ -26,6 +26,8 @@ class DeviceStore extends ChangeNotifier {
   String? error;
   bool scanning = false;
   bool _hideUnnamed = true;
+  bool _disposed = false;
+  int _gen = 0;
 
   bool get hideUnnamed => _hideUnnamed;
   set hideUnnamed(bool value) {
@@ -62,8 +64,10 @@ class DeviceStore extends ChangeNotifier {
   Future<void> refresh() async {
     try {
       status = await _platform.status();
+      if (_disposed) return;
       if (status!.ready) {
         final bonded = await _platform.bonded();
+        if (_disposed) return;
         final keep = {for (final d in bonded) d.address};
         _paired.removeWhere((a, _) => !keep.contains(a));
         for (final d in bonded) {
@@ -74,12 +78,15 @@ class DeviceStore extends ChangeNotifier {
     } on PlatformException catch (e) {
       error = e.message ?? e.code;
     }
+    if (_disposed) return;
     notifyListeners();
   }
 
   Future<void> requestPermission() async {
     await _platform.requestPermissions();
+    if (_disposed) return;
     await refresh();
+    if (_disposed) return;
     if (status?.ready ?? false) await start();
   }
 
@@ -87,8 +94,9 @@ class DeviceStore extends ChangeNotifier {
 
   /// Starts the scan (after checking permissions and that Bluetooth is on).
   Future<void> start() async {
+    final gen = ++_gen;
     await refresh();
-    if (!(status?.ready ?? false) || scanning) return;
+    if (_disposed || gen != _gen || !(status?.ready ?? false) || scanning) return;
     error = null;
     scanning = true;
     _sub = _platform.scan().listen(_onEvent, onError: _onError);
@@ -101,13 +109,14 @@ class DeviceStore extends ChangeNotifier {
 
   /// Stops the scan. Safe to call twice.
   void stop() {
+    _gen++;
     _sub?.cancel();
     _sub = null;
     _tick?.cancel();
     _tick = null;
     if (scanning) {
       scanning = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -155,6 +164,8 @@ class DeviceStore extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _gen++;
     stop();
     super.dispose();
   }

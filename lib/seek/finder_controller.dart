@@ -38,6 +38,7 @@ class FinderController extends ChangeNotifier {
   bool _beepOn = true;
   bool _vibrateOn = false;
   bool _tonePlaying = false;
+  bool _disposed = false;
 
   bool get beepOn => _beepOn;
   bool get vibrateOn => _vibrateOn;
@@ -91,7 +92,12 @@ class FinderController extends ChangeNotifier {
   /// Starts the scan and the 100 ms clock.
   Future<void> start() async {
     await _platform.keepAwake(true);
+    if (_disposed) {
+      await _platform.keepAwake(false);
+      return;
+    }
     _sub = _platform.scan().listen(_onEvent, onError: (Object e) {
+      if (_disposed) return;
       error = e.toString();
       notifyListeners();
     });
@@ -144,8 +150,10 @@ class FinderController extends ChangeNotifier {
       _tonePlaying = true;
       notifyListeners();
       await _platform.playTone();
+      if (_disposed || !_tonePlaying) return;
       // The native side stops the tone by itself after 20 s; keep the button in step.
       _toneTimer = Timer(toneDuration, () {
+        if (_disposed) return;
         _tonePlaying = false;
         notifyListeners();
       });
@@ -158,6 +166,7 @@ class FinderController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _sub?.cancel();
     _timer?.cancel();
     _toneTimer?.cancel();

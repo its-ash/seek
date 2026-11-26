@@ -59,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _covered = true;
     _sync();
     await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+    if (!mounted) return;
     _covered = false;
     _sync();
   }
